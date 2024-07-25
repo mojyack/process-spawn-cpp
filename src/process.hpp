@@ -1,6 +1,6 @@
 #pragma once
+#include <functional>
 #include <span>
-#include <string>
 
 #include "util/fd.hpp"
 

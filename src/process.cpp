@@ -3,6 +3,7 @@
 
 #include <fcntl.h>
 #include <poll.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
