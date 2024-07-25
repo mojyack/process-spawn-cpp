@@ -23,7 +23,7 @@ auto run(const int argc, const char* const argv[]) -> bool {
 
     assert_b(process.start(args));
     while(process.get_status() == process::Status::Running) {
-        process.collect_outputs();
+        assert_b(process.collect_outputs());
     }
     unwrap_ob(result, process.join());
     print("result:");
