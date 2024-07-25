@@ -47,7 +47,8 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
     }
     assert_b(workdir == nullptr || chdir(workdir) != -1);
     execve(argv[0], const_cast<char* const*>(argv.data()), env.empty() ? environ : const_cast<char* const*>(env.data()));
-    _exit(0);
+    warn("exec() failed: ", strerror(errno));
+    _exit(1);
 }
 
 auto Process::join(const bool force) -> std::optional<Result> {
