@@ -1,8 +1,8 @@
 #include "macros/unwrap.hpp"
 #if defined(_WIN32)
-    #include "process-win.hpp"
+#include "process-win.hpp"
 #else
-    #include "process.hpp"
+#include "process.hpp"
 #endif
 
 namespace {
