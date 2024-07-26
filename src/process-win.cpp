@@ -94,7 +94,9 @@ auto Process::join(const bool force) -> std::optional<Result> {
 }
 
 auto Process::get_pid() const -> DWORD {
-    return GetProcessId(process_handle);
+    auto pid = GetProcessId(process_handle);
+    assert_b(pid != 0, "failed to get the process id. GetLastError: ", GetLastError());
+    return pid;
 }
 
 auto Process::get_stdin() -> HANDLE& {
