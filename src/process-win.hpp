@@ -1,8 +1,8 @@
 #pragma once
 #include <functional>
+#include <optional>
 #include <span>
 #include <string>
-#include <optional>
 #include <vector>
 #include <windows.h>
 
@@ -22,8 +22,8 @@ struct Result {
         Signal,
     };
 
-    ExitReason  reason;
-    int         code;
+    ExitReason reason;
+    int        code;
 };
 
 class Process {
@@ -33,10 +33,10 @@ class Process {
         HANDLE input;
     };
 
-    HANDLE              process_handle = nullptr;
-    HANDLE              thread_handle  = nullptr;
-    Status              status = Status::Init;
-    PipePair            pipes[3];
+    HANDLE   process_handle = nullptr;
+    HANDLE   thread_handle  = nullptr;
+    Status   status         = Status::Init;
+    PipePair pipes[3];
 
   public:
     std::function<OnOutput> on_stdout;
