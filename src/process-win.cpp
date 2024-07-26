@@ -112,11 +112,11 @@ auto Process::collect_outputs() -> bool {
         auto buf = std::array<char, 256>();
         while(true) {
             auto bytes_avail = DWORD();
-            if(PeekNamedPipe(handles[i], NULL, 0, NULL, &bytes_avail, NULL) != 0 || bytes_avail == 0) {
+            if(PeekNamedPipe(handles[i], NULL, 0, NULL, &bytes_avail, NULL) == 0 || bytes_avail == 0) {
                 break;
             }
             auto len = DWORD();
-            if(ReadFile(handles[i], buf.data(), buf.size(), &len, NULL) != 0 || len <= 0) {
+            if(ReadFile(handles[i], buf.data(), buf.size(), &len, NULL) != TRUE || len <= 0) {
                 break;
             }
             auto callback = i == 0 ? on_stdout : on_stderr;
