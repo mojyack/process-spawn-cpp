@@ -58,7 +58,7 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
                  NULL,
                  (LPCSTR)workdir,
                  &startup_info,
-                 &process_info) == 0,
+                 &process_info) != 0,
              "CreateProcess failed");
 
     process_handle = process_info.hProcess;
