@@ -2,8 +2,7 @@
 #include <functional>
 #include <optional>
 #include <span>
-#include <string>
-#include <vector>
+
 #include <windows.h>
 
 namespace process {

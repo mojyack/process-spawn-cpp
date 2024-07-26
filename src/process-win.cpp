@@ -1,5 +1,7 @@
 #include <array>
 #include <iostream>
+#include <string>
+
 #include <wtypesbase.h>
 
 #include "macros/assert.hpp"
