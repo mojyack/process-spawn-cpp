@@ -48,7 +48,7 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
 
     auto process_info = PROCESS_INFORMATION();
 
-    assert_b(!CreateProcess(
+    assert_b(CreateProcess(
                  NULL,
                  (LPSTR)command_line.data(),
                  NULL,
@@ -58,7 +58,7 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
                  NULL,
                  (LPCSTR)workdir,
                  &startup_info,
-                 &process_info),
+                 &process_info) == 0,
              "CreateProcess failed");
 
     process_handle = process_info.hProcess;
