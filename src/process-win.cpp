@@ -108,10 +108,8 @@ auto Process::get_status() const -> Status {
 }
 
 auto Process::collect_outputs() -> bool {
-    HANDLE handles[] = { pipes[1].output, pipes[2].output }; 
-    DWORD wait_process;
-    
-    wait_process = WaitForSingleObject(process_handle, 0);
+    const auto handles = std::array<HANDLE, 2>{ pipes[1].output, pipes[2].output };
+    const auto wait_process = WaitForSingleObject(process_handle, 0);
     if (wait_process == WAIT_OBJECT_0){
         status = Status::Finished;
     }
