@@ -45,7 +45,7 @@ class Process {
     auto start(std::span<const char* const> argv, std::span<const char* const> env = {}, const char* workdir = nullptr) -> bool;
     auto join(bool force = false) -> std::optional<Result>;
     auto get_pid() const -> DWORD;
-    auto get_stdin() -> HANDLE&;
+    auto get_stdin() -> HANDLE;
     auto get_status() const -> Status;
     auto collect_outputs() -> bool;
 };
