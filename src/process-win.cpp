@@ -8,7 +8,7 @@
 #include "process-win.hpp"
 
 namespace process {
-
+namespace {
 auto create_pipe(HANDLE& read_pipe, HANDLE& write_pipe) -> bool {
     auto saAttr = SECURITY_ATTRIBUTES{
         .nLength              = sizeof(SECURITY_ATTRIBUTES),
@@ -23,6 +23,7 @@ auto create_pipe(HANDLE& read_pipe, HANDLE& write_pipe) -> bool {
     }
     return true;
 }
+} // namespace
 
 auto Process::start(const std::span<const char* const> argv, const std::span<const char* const> env, const char* const workdir) -> bool {
     assert_b(status == Status::Init);
