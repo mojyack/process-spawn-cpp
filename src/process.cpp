@@ -9,7 +9,6 @@
 
 #include "macros/assert.hpp"
 #include "process.hpp"
-#include "util/fd.hpp"
 
 namespace process {
 auto Process::start(const std::span<const char* const> argv, const std::span<const char* const> env, const char* const workdir) -> bool {
