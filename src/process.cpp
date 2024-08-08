@@ -25,7 +25,7 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
         pipes[i].input  = FileDescriptor(fd[1]);
     }
 
-    pid = vfork();
+    pid = fork();
     assert_b(pid >= 0);
     if(pid != 0) {
         for(auto i = 0; i < 3; i += 1) {
