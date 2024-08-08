@@ -95,7 +95,7 @@ auto Process::collect_outputs() -> bool {
             auto buf = std::array<char, 256>();
             while(true) {
                 const auto len = read(fds[i].fd, buf.data(), buf.size());
-                if(errno == EAGAIN || len == 0) {
+                if((len < 0 && errno == EAGAIN) || len == 0) {
                     break;
                 }
                 assert_b(len > 0);
