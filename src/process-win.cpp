@@ -1,6 +1,6 @@
 #include <array>
 #include <string>
-
+#include <thread>
 #include <wtypesbase.h>
 
 #include "macros/assert.hpp"
@@ -27,7 +27,7 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
     assert_b(env.empty() || env.back() == NULL);
     status = Status::Running;
 
-    for(int i = 0; i < 3; i += 1) {
+    for(auto i = 0; i < 3; i += 1) {
         assert_b(create_pipe(pipes[i].output, pipes[i].input));
     }
 
@@ -60,6 +60,8 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
                  &process_info) != 0,
              "CreateProcess failed");
 
+    assert_b(CloseHandle(pipes[0].output) == TRUE);
+
     process_handle = process_info.hProcess;
     thread_handle  = process_info.hThread;
 
@@ -77,9 +79,11 @@ auto Process::join(const bool force) -> std::optional<Result> {
     assert_o(CloseHandle(process_handle) != 0, "failed to close the process handle");
     assert_o(CloseHandle(thread_handle) != 0, "failed to close the thread handle");
 
-    for(auto i = 0; i < 3; i += 1) {
-        assert_o(CloseHandle(pipes[i].output), "failed to close the output pipe");
-    }
+    assert_o(CloseHandle(pipes[0].input) == TRUE);
+    assert_o(CloseHandle(pipes[1].input) == TRUE);
+    assert_o(CloseHandle(pipes[2].input) == TRUE);
+    assert_o(CloseHandle(pipes[1].output) == TRUE);
+    assert_o(CloseHandle(pipes[2].output) == TRUE);
 
     return Result{
         .reason = exit_code == 0 ? Result::ExitReason::Exit : Result::ExitReason::Signal,
@@ -102,28 +106,46 @@ auto Process::get_status() const -> Status {
 }
 
 auto Process::collect_outputs() -> bool {
-    const auto handles      = std::array{pipes[1].output, pipes[2].output};
-    const auto wait_process = WaitForSingleObject(process_handle, 0);
-    if(wait_process == WAIT_OBJECT_0) {
-        status = Status::Finished;
-    }
-    for(auto i = 0; i < 2; i += 1) {
-        auto buf = std::array<char, 256>();
-        while(true) {
-            auto bytes_avail = DWORD();
-            if(PeekNamedPipe(handles[i], NULL, 0, NULL, &bytes_avail, NULL) == 0 || bytes_avail == 0) {
-                break;
-            }
+    // child threads to collect the (stdout, stderr) outputs
+    auto threads = std::array<std::thread, 2>(); // stdout, stderr
+    for(auto i = 0; i < threads.size(); i += 1) {
+        threads[i] = std::thread([this, i]() {
+            auto buf = std::array<char, 256>();
             auto len = DWORD();
-            if(ReadFile(handles[i], buf.data(), buf.size(), &len, NULL) != TRUE || len <= 0) {
-                break;
+            while(true) {
+                if(ReadFile(pipes[i + 1].output, buf.data(), buf.size(), &len, NULL) != TRUE || len <= 0) {
+                    break;
+                }
+                if(status == Status::Finished) {
+                    // finished the main process
+                    break;
+                }
+                if(on_stdout) {
+                    on_stdout({buf.data(), size_t(len)});
+                }
             }
-            auto callback = i == 0 ? on_stdout : on_stderr;
-            if(callback) {
-                callback({buf.data(), size_t(len)});
+        });
+    }
+
+    // main process
+    while(true) {
+        const auto wait_process = WaitForSingleObject(process_handle, INFINITE);
+        if(wait_process == WAIT_OBJECT_0) {
+            status   = Status::Finished;
+            auto buf = std::array<char, 1>{' '};
+            auto len = DWORD();
+            assert_b(WriteFile(pipes[1].input, buf.data(), buf.size(), &len, NULL) == TRUE, "failed to write to the child process. GetLastError: ", GetLastError());
+            assert_b(WriteFile(pipes[2].input, buf.data(), buf.size(), &len, NULL) == TRUE, "failed to write to the child process. GetLastError: ", GetLastError());
+            while(true) {
+                if(threads[0].joinable() && threads[1].joinable()) {
+                    threads[0].join();
+                    threads[1].join();
+                    break;
+                }
             }
+            return true;
         }
     }
-    return true;
+    return false; // unreachable
 }
 } // namespace process
