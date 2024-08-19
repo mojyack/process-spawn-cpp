@@ -120,8 +120,9 @@ auto Process::collect_outputs() -> bool {
                     // finished the main process
                     break;
                 }
-                if(on_stdout) {
-                    on_stdout({buf.data(), size_t(len)});
+                auto callback = i == 0 ? on_stdout : on_stderr;
+                if(callback) {
+                    callback({buf.data(), size_t(len)});
                 }
             }
         });
