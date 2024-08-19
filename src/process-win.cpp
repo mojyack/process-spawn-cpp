@@ -132,7 +132,7 @@ auto Process::collect_outputs() -> bool {
         const auto wait_process = WaitForSingleObject(process_handle, INFINITE);
         if(wait_process == WAIT_OBJECT_0) {
             status   = Status::Finished;
-            auto buf = std::array<char, 1>{' '};
+            auto buf = std::array{' '};
             auto len = DWORD();
             assert_b(WriteFile(pipes[1].input, buf.data(), buf.size(), &len, NULL) == TRUE, "failed to write to the child process. GetLastError: ", GetLastError());
             assert_b(WriteFile(pipes[2].input, buf.data(), buf.size(), &len, NULL) == TRUE, "failed to write to the child process. GetLastError: ", GetLastError());
