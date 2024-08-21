@@ -12,21 +12,21 @@
 
 namespace process {
 auto Process::start(const std::span<const char* const> argv, const std::span<const char* const> env, const char* const workdir) -> bool {
-    assert_b(status == Status::Init);
-    assert_b(!argv.empty());
-    assert_b(argv.back() == NULL);
-    assert_b(env.empty() || env.back() == NULL);
+    ensure(status == Status::Init);
+    ensure(!argv.empty());
+    ensure(argv.back() == NULL);
+    ensure(env.empty() || env.back() == NULL);
     status = Status::Running;
 
     for(auto i = 0; i < 3; i += 1) {
         auto fd = std::array<int, 2>();
-        assert_b(pipe(fd.data()) >= 0);
+        ensure(pipe(fd.data()) >= 0);
         pipes[i].output = FileDescriptor(fd[0]);
         pipes[i].input  = FileDescriptor(fd[1]);
     }
 
     pid = fork();
-    assert_b(pid >= 0);
+    ensure(pid >= 0);
     if(pid != 0) {
         for(auto i = 0; i < 3; i += 1) {
             auto& use   = (i == 0 ? pipes[i].input : pipes[i].output);
@@ -45,20 +45,20 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
         pipes[i].input.close();
         pipes[i].output.close();
     }
-    assert_b(workdir == nullptr || chdir(workdir) != -1);
+    ensure(workdir == nullptr || chdir(workdir) != -1);
     execve(argv[0], const_cast<char* const*>(argv.data()), env.empty() ? environ : const_cast<char* const*>(env.data()));
     warn("exec() failed: ", strerror(errno));
     _exit(1);
 }
 
 auto Process::join(const bool force) -> std::optional<Result> {
-    assert_o(status == Status::Running || status == Status::Finished);
+    ensure(status == Status::Running || status == Status::Finished);
     status = Status::Joined;
 
-    assert_o(!force || kill(pid, SIGKILL) != -1, "failed to kill process");
+    ensure(!force || kill(pid, SIGKILL) != -1, "failed to kill process");
 
     auto status = int();
-    assert_o(waitpid(pid, &status, 0) != -1);
+    ensure(waitpid(pid, &status, 0) != -1);
 
     const auto exitted = bool(WIFEXITED(status));
     return Result{
@@ -85,7 +85,7 @@ auto Process::collect_outputs() -> bool {
         pollfd{.fd = pipes[2].output.as_handle(), .events = POLLIN},
     };
 
-    assert_b(poll(fds.data(), fds.size(), -1) != -1);
+    ensure(poll(fds.data(), fds.size(), -1) != -1);
     for(auto i = 0; i < 2; i += 1) {
         if(fds[i].revents & POLLHUP) {
             // target has exitted
@@ -98,7 +98,7 @@ auto Process::collect_outputs() -> bool {
                 if((len < 0 && errno == EAGAIN) || len == 0) {
                     break;
                 }
-                assert_b(len > 0);
+                ensure(len > 0);
                 auto callback = i == 0 ? on_stdout : on_stderr;
                 if(callback) {
                     callback({buf.data(), size_t(len)});

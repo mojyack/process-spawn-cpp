@@ -5,9 +5,8 @@
 #include "process.hpp"
 #endif
 
-namespace {
-auto run(const int argc, const char* const argv[]) -> bool {
-    assert_b(argc >= 1);
+auto main(const int argc, const char* const argv[]) -> int {
+    ensure(argc >= 1);
     auto args = std::vector<const char*>();
     for(auto i = 1; i < argc; i += 1) {
         args.push_back(argv[i]);
@@ -25,20 +24,15 @@ auto run(const int argc, const char* const argv[]) -> bool {
         errors.insert(errors.end(), output.begin(), output.end());
     };
 
-    assert_b(process.start(args));
+    ensure(process.start(args));
     while(process.get_status() == process::Status::Running) {
-        assert_b(process.collect_outputs());
+        ensure(process.collect_outputs());
     }
-    unwrap_ob(result, process.join());
+    unwrap(result, process.join());
     print("result:");
     print("  reason=", int(result.reason));
     print("  code=", result.code);
     print("  stdout=", outputs);
     print("  stderr=", errors);
-    return true;
-}
-} // namespace
-
-auto main(const int argc, const char* const argv[]) -> int {
-    return run(argc, argv) ? 0 : 1;
+    return 0;
 }
