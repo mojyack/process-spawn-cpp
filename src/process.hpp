@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <optional>
 #include <span>
 
 #define CUTIL_NS process
