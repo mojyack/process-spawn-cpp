@@ -20,7 +20,7 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
 
     for(auto i = 0; i < 3; i += 1) {
         auto fd = std::array<int, 2>();
-        ensure(pipe(fd.data()) >= 0);
+        ensure(pipe2(fd.data(), O_NONBLOCK | O_CLOEXEC) >= 0);
         pipes[i].output = FileDescriptor(fd[0]);
         pipes[i].input  = FileDescriptor(fd[1]);
     }
@@ -29,11 +29,7 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
     ensure(pid >= 0);
     if(pid != 0) {
         for(auto i = 0; i < 3; i += 1) {
-            auto& use   = (i == 0 ? pipes[i].input : pipes[i].output);
             auto& nouse = (i == 0 ? pipes[i].output : pipes[i].input);
-            if(fcntl(use.as_handle(), F_SETFL, O_NONBLOCK) == -1) {
-                return false;
-            }
             nouse.close();
         }
         return true;
