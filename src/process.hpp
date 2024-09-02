@@ -29,14 +29,11 @@ struct Result {
 
 class Process {
   private:
-    struct FDPair {
-        FileDescriptor output;
-        FileDescriptor input;
-    };
-
-    pid_t  pid    = 0;
-    Status status = Status::Init;
-    FDPair pipes[3];
+    pid_t          pid    = 0;
+    Status         status = Status::Init;
+    FileDescriptor stdin_fd;
+    FileDescriptor stdout_fd;
+    FileDescriptor stderr_fd;
 
   public:
     std::function<OnOutput> on_stdout;

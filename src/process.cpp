@@ -7,10 +7,26 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "macros/assert.hpp"
+#include "macros/unwrap.hpp"
 #include "process.hpp"
 
 namespace process {
+namespace {
+struct AutoPipe {
+    FileDescriptor output;
+    FileDescriptor input;
+
+    static auto create() -> std::optional<AutoPipe> {
+        auto fd = std::array<int, 2>();
+        ensure(pipe2(fd.data(), O_NONBLOCK | O_CLOEXEC) >= 0);
+        return AutoPipe{
+            fd[0],
+            fd[1],
+        };
+    }
+};
+} // namespace
+
 auto Process::start(const std::span<const char* const> argv, const std::span<const char* const> env, const char* const workdir) -> bool {
     ensure(status == Status::Init);
     ensure(!argv.empty());
@@ -18,29 +34,23 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
     ensure(env.empty() || env.back() == NULL);
     status = Status::Running;
 
-    for(auto i = 0; i < 3; i += 1) {
-        auto fd = std::array<int, 2>();
-        ensure(pipe2(fd.data(), O_NONBLOCK | O_CLOEXEC) >= 0);
-        pipes[i].output = FileDescriptor(fd[0]);
-        pipes[i].input  = FileDescriptor(fd[1]);
-    }
+    unwrap_mut(stdin_pipe, AutoPipe::create());
+    unwrap_mut(stdout_pipe, AutoPipe::create());
+    unwrap_mut(stderr_pipe, AutoPipe::create());
 
     pid = fork();
     ensure(pid >= 0);
     if(pid != 0) {
-        for(auto i = 0; i < 3; i += 1) {
-            auto& nouse = (i == 0 ? pipes[i].output : pipes[i].input);
-            nouse.close();
-        }
+        stdin_fd  = std::move(stdin_pipe.input);
+        stdout_fd = std::move(stdout_pipe.output);
+        stderr_fd = std::move(stderr_pipe.output);
         return true;
     }
 
-    for(auto i = 0; i < 3; i += 1) {
-        auto& use = (i == 0 ? pipes[i].output : pipes[i].input);
-        dup2(use.as_handle(), i);
-        pipes[i].input.close();
-        pipes[i].output.close();
-    }
+    dup2(stdin_pipe.output.as_handle(), 0);
+    dup2(stdout_pipe.input.as_handle(), 1);
+    dup2(stderr_pipe.input.as_handle(), 2);
+
     ensure(workdir == nullptr || chdir(workdir) != -1);
     execve(argv[0], const_cast<char* const*>(argv.data()), env.empty() ? environ : const_cast<char* const*>(env.data()));
     warn("exec() failed: ", strerror(errno));
@@ -68,7 +78,7 @@ auto Process::get_pid() const -> pid_t {
 }
 
 auto Process::get_stdin() -> FileDescriptor& {
-    return pipes[0].input;
+    return stdin_fd;
 }
 
 auto Process::get_status() const -> Status {
@@ -77,8 +87,8 @@ auto Process::get_status() const -> Status {
 
 auto Process::collect_outputs() -> bool {
     auto fds = std::array{
-        pollfd{.fd = pipes[1].output.as_handle(), .events = POLLIN},
-        pollfd{.fd = pipes[2].output.as_handle(), .events = POLLIN},
+        pollfd{.fd = stdout_fd.as_handle(), .events = POLLIN, .revents = 0},
+        pollfd{.fd = stderr_fd.as_handle(), .events = POLLIN, .revents = 0},
     };
 
     ensure(poll(fds.data(), fds.size(), -1) != -1);
