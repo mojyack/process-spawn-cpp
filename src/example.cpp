@@ -24,7 +24,7 @@ auto main(const int argc, const char* const argv[]) -> int {
         errors.insert(errors.end(), output.begin(), output.end());
     };
 
-    ensure(process.start(args));
+    ensure(process.start({.argv = args}));
     while(process.get_status() == process::Status::Running) {
         ensure(process.collect_outputs());
     }
