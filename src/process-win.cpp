@@ -47,7 +47,7 @@ auto Process::start(const StartParams& params) -> bool {
 
     auto process_info = PROCESS_INFORMATION();
 
-    ensure(CreateProcess(
+    ensure(CreateProcessA(
                NULL,
                (LPSTR)command_line.data(),
                NULL,
