@@ -27,11 +27,11 @@ struct AutoPipe {
 };
 } // namespace
 
-auto Process::start(const std::span<const char* const> argv, const std::span<const char* const> env, const char* const workdir) -> bool {
+auto Process::start(const StartParams& params) -> bool {
     ensure(status == Status::Init);
-    ensure(!argv.empty());
-    ensure(argv.back() == NULL);
-    ensure(env.empty() || env.back() == NULL);
+    ensure(!params.argv.empty());
+    ensure(params.argv.back() == NULL);
+    ensure(params.env.empty() || params.env.back() == NULL);
     status = Status::Running;
 
     unwrap_mut(stdin_pipe, AutoPipe::create());
@@ -51,8 +51,8 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
     dup2(stdout_pipe.input.as_handle(), 1);
     dup2(stderr_pipe.input.as_handle(), 2);
 
-    ensure(workdir == nullptr || chdir(workdir) != -1);
-    execve(argv[0], const_cast<char* const*>(argv.data()), env.empty() ? environ : const_cast<char* const*>(env.data()));
+    ensure(params.workdir == nullptr || chdir(params.workdir) != -1);
+    execve(params.argv[0], const_cast<char* const*>(params.argv.data()), params.env.empty() ? environ : const_cast<char* const*>(params.env.data()));
     warn("exec() failed: ", strerror(errno));
     _exit(1);
 }

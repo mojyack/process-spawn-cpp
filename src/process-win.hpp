@@ -24,8 +24,7 @@ class Process {
     std::function<OnOutput> on_stdout;
     std::function<OnOutput> on_stderr;
 
-    // argv.back() and env.back() must be NULL
-    auto start(std::span<const char* const> argv, std::span<const char* const> env = {}, const char* workdir = nullptr) -> bool;
+    auto start(const StartParams& params) -> bool;
     auto join(bool force = false) -> std::optional<Result>;
     auto get_pid() const -> DWORD;
     auto get_stdin() -> HANDLE;

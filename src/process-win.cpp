@@ -20,11 +20,11 @@ auto create_pipe(HANDLE& read_pipe, HANDLE& write_pipe) -> bool {
 }
 } // namespace
 
-auto Process::start(const std::span<const char* const> argv, const std::span<const char* const> env, const char* const workdir) -> bool {
+auto Process::start(const StartParams& params) -> bool {
     ensure(status == Status::Init);
-    ensure(!argv.empty());
-    ensure(argv.back() == NULL);
-    ensure(env.empty() || env.back() == NULL);
+    ensure(!params.argv.empty());
+    ensure(params.argv.back() == NULL);
+    ensure(params.env.empty() || params.env.back() == NULL);
     status = Status::Running;
 
     for(auto i = 0; i < 3; i += 1) {
@@ -32,8 +32,8 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
     }
 
     auto command_line = std::string();
-    for(auto i = 0u; argv[i] != nullptr; i += 1) {
-        command_line += argv[i];
+    for(auto i = 0u; params.argv[i] != nullptr; i += 1) {
+        command_line += params.argv[i];
         command_line += " ";
     }
 
@@ -55,7 +55,7 @@ auto Process::start(const std::span<const char* const> argv, const std::span<con
                  TRUE,
                  0,
                  NULL,
-                 (LPCSTR)workdir,
+                 (LPCSTR)params.workdir,
                  &startup_info,
                  &process_info) != 0,
              "CreateProcess failed");
