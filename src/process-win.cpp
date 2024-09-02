@@ -33,8 +33,9 @@ auto Process::start(const StartParams& params) -> bool {
 
     auto command_line = std::string();
     for(auto i = 0u; params.argv[i] != nullptr; i += 1) {
+        command_line += "\"";
         command_line += params.argv[i];
-        command_line += " ";
+        command_line += "\" ";
     }
 
     auto startup_info = STARTUPINFO{
