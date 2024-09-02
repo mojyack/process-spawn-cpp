@@ -106,7 +106,7 @@ auto Process::get_status() const -> Status {
 auto Process::collect_outputs() -> bool {
     // child threads to collect the (stdout, stderr) outputs
     auto threads = std::array<std::thread, 2>(); // stdout, stderr
-    for(auto i = 0; i < threads.size(); i += 1) {
+    for(auto i = 0u; i < threads.size(); i += 1) {
         threads[i] = std::thread([this, i]() {
             auto buf = std::array<char, 256>();
             auto len = DWORD();
