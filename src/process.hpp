@@ -1,32 +1,14 @@
 #pragma once
 #include <functional>
 #include <optional>
-#include <span>
+
+#include "common.hpp"
 
 #define CUTIL_NS process
 #include "util/fd.hpp"
 #undef CUTIL_NS
 
 namespace process {
-using OnOutput = void(std::span<char> output);
-
-enum class Status : int {
-    Init,
-    Running,
-    Finished,
-    Joined,
-};
-
-struct Result {
-    enum class ExitReason : int {
-        Exit,
-        Signal,
-    };
-
-    ExitReason reason;
-    int        code;
-};
-
 class Process {
   private:
     pid_t          pid    = 0;
