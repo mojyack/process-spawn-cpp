@@ -48,17 +48,17 @@ auto Process::start(const StartParams& params) -> bool {
     auto process_info = PROCESS_INFORMATION();
 
     ensure(CreateProcess(
-                 NULL,
-                 (LPSTR)command_line.data(),
-                 NULL,
-                 NULL,
-                 TRUE,
-                 0,
-                 NULL,
-                 (LPCSTR)params.workdir,
-                 &startup_info,
-                 &process_info) != 0,
-             "CreateProcess failed");
+               NULL,
+               (LPSTR)command_line.data(),
+               NULL,
+               NULL,
+               TRUE,
+               0,
+               NULL,
+               (LPCSTR)params.workdir,
+               &startup_info,
+               &process_info) != 0,
+           "CreateProcess failed");
 
     ensure(CloseHandle(pipes[0].output) == TRUE);
 
