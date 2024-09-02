@@ -65,6 +65,18 @@ auto Process::start(const StartParams& params) -> bool {
     process_handle = process_info.hProcess;
     thread_handle  = process_info.hThread;
 
+    if(params.die_on_parent_exit) {
+        auto job_object = CreateJobObjectW(NULL, NULL);
+        ensure(job_object, "CreateJobObjectW failed, GetLastError: ", GetLastError());
+        auto job_info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION{
+            .BasicLimitInformation = {
+                .LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+            },
+        };
+        ensure(SetInformationJobObject(job_object, JobObjectExtendedLimitInformation, &job_info, sizeof(job_info)) != 0, "SetInformationJobObject failed, GetLastError: ", GetLastError());
+        ensure(AssignProcessToJobObject(job_object, process_handle) != 0, "AssignProcessToJobObject failed, GetLastError: ", GetLastError());
+    }
+
     return true;
 }
 
@@ -106,7 +118,7 @@ auto Process::get_status() const -> Status {
 auto Process::collect_outputs() -> bool {
     // child threads to collect the (stdout, stderr) outputs
     auto threads = std::array<std::thread, 2>(); // stdout, stderr
-    for(auto i = 0; i < threads.size(); i += 1) {
+    for(auto i = 0u; i < threads.size(); i += 1) {
         threads[i] = std::thread([this, i]() {
             auto buf = std::array<char, 256>();
             auto len = DWORD();
