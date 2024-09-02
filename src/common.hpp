@@ -12,9 +12,10 @@ enum class Status : int {
 };
 
 struct StartParams {
-    std::span<const char* const> argv;         // must be null terminated
-    std::span<const char* const> env     = {}; // must be null terminated
-    const char*                  workdir = nullptr;
+    std::span<const char* const> argv;                    // must be null terminated
+    std::span<const char* const> env                = {}; // must be null terminated
+    const char*                  workdir            = nullptr;
+    bool                         die_on_parent_exit = false;
 };
 
 struct Result {
