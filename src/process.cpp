@@ -52,11 +52,11 @@ auto Process::start(const StartParams& params) -> bool {
 
     if(params.die_on_parent_exit) {
         if(prctl(PR_SET_PDEATHSIG, SIGTERM) == -1) {
-            warn("prctl() failed: ", strerror(errno));
+            WARN("prctl() failed: {}", strerror(errno));
             _exit(1);
         }
         if(getppid() != ppid) {
-            print("parent process exitted");
+            PRINT("parent process exitted");
             _exit(0);
         }
     }
@@ -66,11 +66,11 @@ auto Process::start(const StartParams& params) -> bool {
     dup2(stderr_pipe.input.as_handle(), 2);
 
     if(params.workdir != nullptr && chdir(params.workdir) == -1) {
-        warn("chdir() to ", params.workdir, "failed: ", strerror(errno));
+        WARN("chdir() to {} failed: {}", params.workdir, strerror(errno));
         _exit(1);
     }
     execve(params.argv[0], const_cast<char* const*>(params.argv.data()), params.env.empty() ? environ : const_cast<char* const*>(params.env.data()));
-    warn("exec() failed: ", strerror(errno));
+    WARN("exec() failed: {}", strerror(errno));
     _exit(1);
 }
 

@@ -68,14 +68,14 @@ auto Process::start(const StartParams& params) -> bool {
 
     if(params.die_on_parent_exit) {
         auto job_object = CreateJobObjectW(NULL, NULL);
-        ensure(job_object, "CreateJobObjectW failed, GetLastError: ", GetLastError());
+        ensure(job_object, "CreateJobObjectW failed, GetLastError: {}", GetLastError());
         auto job_info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION{
             .BasicLimitInformation = {
                 .LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
             },
         };
-        ensure(SetInformationJobObject(job_object, JobObjectExtendedLimitInformation, &job_info, sizeof(job_info)) != 0, "SetInformationJobObject failed, GetLastError: ", GetLastError());
-        ensure(AssignProcessToJobObject(job_object, process_handle) != 0, "AssignProcessToJobObject failed, GetLastError: ", GetLastError());
+        ensure(SetInformationJobObject(job_object, JobObjectExtendedLimitInformation, &job_info, sizeof(job_info)) != 0, "SetInformationJobObject failed, GetLastError: {}", GetLastError());
+        ensure(AssignProcessToJobObject(job_object, process_handle) != 0, "AssignProcessToJobObject failed, GetLastError: {}", GetLastError());
     }
 
     return true;
@@ -141,12 +141,12 @@ auto Process::collect_outputs() -> bool {
 
     // main process
     const auto wait_process = WaitForSingleObject(process_handle, INFINITE);
-    ensure(wait_process == WAIT_OBJECT_0, "wait_process failed. WaitForSingleObject(): ", wait_process);
+    ensure(wait_process == WAIT_OBJECT_0, "wait_process failed. WaitForSingleObject(): {}", wait_process);
     status   = Status::Finished;
     auto buf = std::array{' '};
     auto len = DWORD();
-    ensure(WriteFile(pipes[1].input, buf.data(), buf.size(), &len, NULL) == TRUE, "failed to write to the child process. GetLastError: ", GetLastError());
-    ensure(WriteFile(pipes[2].input, buf.data(), buf.size(), &len, NULL) == TRUE, "failed to write to the child process. GetLastError: ", GetLastError());
+    ensure(WriteFile(pipes[1].input, buf.data(), buf.size(), &len, NULL) == TRUE, "failed to write to the child process. GetLastError: {}", GetLastError());
+    ensure(WriteFile(pipes[2].input, buf.data(), buf.size(), &len, NULL) == TRUE, "failed to write to the child process. GetLastError: {}", GetLastError());
     for(auto& thread : threads) {
         thread.join();
     }

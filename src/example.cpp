@@ -29,10 +29,10 @@ auto main(const int argc, const char* const argv[]) -> int {
         ensure(process.collect_outputs());
     }
     unwrap(result, process.join());
-    print("result:");
-    print("  reason=", int(result.reason));
-    print("  code=", result.code);
-    print("  stdout=", outputs);
-    print("  stderr=", errors);
+    std::println("result:");
+    std::println("  reason={}", std::to_underlying(result.reason));
+    std::println("  code={}", result.code);
+    std::println("  stdout={}", outputs);
+    std::println("  stderr={}", errors);
     return 0;
 }
